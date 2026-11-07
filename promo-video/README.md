@@ -20,3 +20,7 @@ Run `node promo-video/server.mjs`, open `http://127.0.0.1:3210/` in Chrome or Ed
 ## Voiceover script
 
 `narration.txt` contains the spoken script, timed to the eight film scenes. Music uses a low, restrained synth bed with short transition chimes under the voice.
+
+## Social upload copy
+
+`lightningbridge-product-film.mp4` is the ready-to-upload export for platforms that require MP4: H.264 video at 1280 × 720 and AAC audio. The browser-rendered WebM master is kept alongside it.
