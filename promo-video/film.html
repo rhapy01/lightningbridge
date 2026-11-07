@@ -93,7 +93,7 @@
     const begin=performance.now();
     recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
     recorder.onstop=async()=>{stream.getTracks().forEach(track=>track.stop());recording=false;button.disabled=true;button.textContent='Video rendered';const blob=new Blob(chunks,{type:mime});status.textContent=`Saving ${(blob.size/1_000_000).toFixed(1)} MB video into the project…`;try{const saved=await fetch('/save',{method:'POST',headers:{'content-type':'video/webm'},body:blob});if(!saved.ok)throw new Error('Could not save the rendered video.');status.textContent=`Video ready · ${(blob.size/1_000_000).toFixed(1)} MB · saved in promo-video/`;}catch(error){const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='lightningbridge-product-film.webm';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),30_000);status.textContent=`Project save unavailable; browser download started · ${(blob.size/1_000_000).toFixed(1)} MB`;}};
-    recorder.start(1000);
+    recorder.start();
     function frame(now){const t=(now-begin)/1000;drawAt(Math.min(t,DURATION));if(t>=DURATION){recorder.stop();return}requestAnimationFrame(frame)}
     requestAnimationFrame(frame);
   });
