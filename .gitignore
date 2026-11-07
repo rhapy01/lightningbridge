@@ -25,6 +25,7 @@ yarn-error.log*
 
 # product film renders
 /promo-video/output/
+/promo-video/technology-music-pixabay.mp3
 
 # unused starter assets
 /public/apple-icon.png
