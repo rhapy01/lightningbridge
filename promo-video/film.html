@@ -20,7 +20,7 @@
 <main>
   <header><strong>LIGHTNINGBRIDGE / PRODUCT FILM</strong><span>60 seconds · 16:9 · 1600 × 900</span></header>
   <section class="stage"><canvas id="film" width="1600" height="900" aria-label="LightningBridge product film preview"></canvas></section>
-  <div class="controls"><button id="render">Render video</button><span class="status" id="status">Preview plays silently. Press Render video to save a WebM.</span><span class="credit">An explainer of the real payment flow</span></div>
+  <div class="controls"><button id="render">Render video</button><span class="status" id="status">The film preview is silent; render includes synchronized voiceover and music.</span><span class="credit">Voiceover + original ambient score</span></div>
 </main>
 <script>
 (() => {
@@ -82,19 +82,44 @@
   function preview(now){if(!recording)drawAt(((now-started)/1000)%DURATION);requestAnimationFrame(preview)}
   let recording=false;
   requestAnimationFrame(preview);
-  button.addEventListener('click',()=>{
+  button.addEventListener('click',async()=>{
     if(!canvas.captureStream||!window.MediaRecorder){status.textContent='This browser cannot render video. Open this page in Chrome or Edge.';return}
-    button.disabled=true;recording=true;status.textContent='Rendering 60 seconds in real time… keep this tab open.';
+    button.disabled=true;recording=true;status.textContent='Starting narration and ambient music…';
     const stream=canvas.captureStream(30);
-    const mime=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'].find(type=>MediaRecorder.isTypeSupported(type));
-    if(!mime){recording=false;button.disabled=false;status.textContent='This browser does not support WebM video recording.';return}
+    let audioContext, voiceSource, musicBus, oscillators=[], musicNodes=[];
+    try{
+      audioContext=new AudioContext();
+      const audioOut=audioContext.createMediaStreamDestination();
+      const waveResponse=await fetch('/narration.wav');
+      if(!waveResponse.ok)throw new Error('Narration file could not be loaded.');
+      const narration=await audioContext.decodeAudioData(await waveResponse.arrayBuffer());
+      voiceSource=audioContext.createBufferSource();voiceSource.buffer=narration;
+      const voiceGain=audioContext.createGain();voiceGain.gain.value=.94;
+      voiceSource.connect(voiceGain);voiceGain.connect(audioOut);voiceGain.connect(audioContext.destination);
+      musicBus=audioContext.createGain();musicBus.gain.value=0;musicBus.connect(audioOut);musicBus.connect(audioContext.destination);
+      const lowpass=audioContext.createBiquadFilter();lowpass.type='lowpass';lowpass.frequency.value=720;lowpass.connect(musicBus);
+      const chordProgression=[[82.41,123.47,164.81],[65.41,130.81,196],[98,146.83,196],[73.42,110,146.83],[82.41,123.47,164.81],[65.41,130.81,196],[98,146.83,196],[73.42,110,146.83]];
+      const sceneTimes=[0,5,12,21,29,39,48,54];
+      const levels=[.045,.024,.014];
+      oscillators=levels.map((level,index)=>{const oscillator=audioContext.createOscillator();const gain=audioContext.createGain();oscillator.type=index===1?'triangle':'sine';gain.gain.value=level;oscillator.connect(gain);gain.connect(lowpass);oscillator.start();musicNodes.push(oscillator);return oscillator});
+      audioOut.stream.getAudioTracks().forEach(track=>stream.addTrack(track));
+      await audioContext.resume();
+    }catch(error){stream.getTracks().forEach(track=>track.stop());musicNodes.forEach(node=>node.stop());if(audioContext)await audioContext.close();recording=false;button.disabled=false;status.textContent='Voiceover could not start in this browser. Refresh and try again.';return}
+    status.textContent='Rendering the 60-second film with synchronized narration and music…';
+    const mime=['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm;codecs=vp9','video/webm'].find(type=>MediaRecorder.isTypeSupported(type));
+    if(!mime){stream.getTracks().forEach(track=>track.stop());musicNodes.forEach(node=>node.stop());voiceSource.stop();await audioContext.close();recording=false;button.disabled=false;status.textContent='This browser does not support WebM video recording.';return}
     const chunks=[];let recorder;
-    try{recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:8_000_000})}catch(e){recording=false;button.disabled=false;status.textContent='Video recorder could not start in this browser.';return}
-    const begin=performance.now();
+    try{recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:8_000_000,audioBitsPerSecond:160_000})}catch(e){stream.getTracks().forEach(track=>track.stop());musicNodes.forEach(node=>node.stop());voiceSource.stop();await audioContext.close();recording=false;button.disabled=false;status.textContent='Video recorder could not start in this browser.';return}
+    const audioStart=audioContext.currentTime+.2;
+    musicBus.gain.setValueAtTime(0,audioStart);musicBus.gain.linearRampToValueAtTime(.24,audioStart+2);musicBus.gain.setValueAtTime(.24,audioStart+55);musicBus.gain.linearRampToValueAtTime(0,audioStart+60);
+    const chordProgression=[[82.41,123.47,164.81],[65.41,130.81,196],[98,146.83,196],[73.42,110,146.83],[82.41,123.47,164.81],[65.41,130.81,196],[98,146.83,196],[73.42,110,146.83]];
+    const sceneTimes=[0,5,12,21,29,39,48,54];
+    chordProgression.forEach((chord,index)=>chord.forEach((frequency,voiceIndex)=>musicNodes[voiceIndex].frequency.setTargetAtTime(frequency,audioStart+sceneTimes[index],.7)));
     recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
-    recorder.onstop=async()=>{stream.getTracks().forEach(track=>track.stop());recording=false;button.disabled=true;button.textContent='Video rendered';const blob=new Blob(chunks,{type:mime});status.textContent=`Saving ${(blob.size/1_000_000).toFixed(1)} MB video into the project…`;try{const saved=await fetch('/save',{method:'POST',headers:{'content-type':'video/webm'},body:blob});if(!saved.ok)throw new Error('Could not save the rendered video.');status.textContent=`Video ready · ${(blob.size/1_000_000).toFixed(1)} MB · saved in promo-video/`;}catch(error){const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='lightningbridge-product-film.webm';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),30_000);status.textContent=`Project save unavailable; browser download started · ${(blob.size/1_000_000).toFixed(1)} MB`;}};
+    recorder.onstop=async()=>{stream.getTracks().forEach(track=>track.stop());musicNodes.forEach(node=>{try{node.stop()}catch{}});await audioContext.close();recording=false;button.disabled=true;button.textContent='Video rendered';const blob=new Blob(chunks,{type:mime});status.textContent=`Saving ${(blob.size/1_000_000).toFixed(1)} MB video into the project…`;try{const saved=await fetch('/save',{method:'POST',headers:{'content-type':'video/webm'},body:blob});if(!saved.ok)throw new Error('Could not save the rendered video.');status.textContent=`Video ready · ${(blob.size/1_000_000).toFixed(1)} MB · voiceover + music included.`;}catch(error){const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='lightningbridge-product-film.webm';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),30_000);status.textContent=`Project save unavailable; browser download started · ${(blob.size/1_000_000).toFixed(1)} MB`;}};
     recorder.start();
-    function frame(now){const t=(now-begin)/1000;drawAt(Math.min(t,DURATION));if(t>=DURATION){recorder.stop();return}requestAnimationFrame(frame)}
+    const startFrame=performance.now();voiceSource.start(audioStart);
+    function frame(now){const t=(now-startFrame)/1000;drawAt(Math.min(t,DURATION));if(t>=DURATION){recorder.stop();return}requestAnimationFrame(frame)}
     requestAnimationFrame(frame);
   });
 })();

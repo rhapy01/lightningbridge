@@ -36,6 +36,13 @@ const server = createServer(async (request, response) => {
       createReadStream(file).pipe(response)
       return
     }
+    if (request.method === 'GET' && request.url === '/narration.wav') {
+      const file = join(root, 'narration.wav')
+      const details = await stat(file)
+      response.writeHead(200, { 'content-type': 'audio/wav', 'content-length': details.size, 'cache-control': 'no-store' })
+      createReadStream(file).pipe(response)
+      return
+    }
     if (request.method === 'GET' && request.url === '/preview') {
       response.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' })
       response.end('<!doctype html><meta name="viewport" content="width=device-width"><title>LightningBridge film preview</title><body style="margin:0;background:#101b19;display:grid;place-items:center;min-height:100vh"><main style="width:min(100vw,1200px);color:#c8d7cb;font:13px Segoe UI,Arial,sans-serif"><video id="film" controls autoplay playsinline style="width:100%;height:auto" src="/video"></video><p id="details" style="padding:0 14px">Loading video…</p></main><script>const v=document.querySelector("#film"),d=document.querySelector("#details");v.onloadedmetadata=()=>d.textContent=`${v.duration.toFixed(1)} seconds · ${v.videoWidth} × ${v.videoHeight} · ${v.canPlayType("video/webm; codecs=vp9")?"WebM/VP9":"WebM"}`;v.onerror=()=>d.textContent="The browser could not decode this video.";v.ontimeupdate=()=>d.dataset.position=v.currentTime.toFixed(1)</script></body>')

@@ -1,6 +1,6 @@
 # LightningBridge product film
 
-`film.html` is a self-contained, silent 60-second product explainer. It draws the motion graphics and interface illustrations in Canvas and uses the browser's built-in `MediaRecorder` to save a 1600 × 900 WebM; no paid rendering service or video package is needed.
+`film.html` is a self-contained 60-second product explainer with synchronized narration and an original ambient score. It draws the motion graphics in Canvas and uses the browser's built-in `MediaRecorder` to save a 1600 × 900 WebM; no paid rendering service or third-party music asset is needed.
 
 The film explains the actual flow:
 
@@ -15,8 +15,8 @@ The on-screen phone views are illustrative redraws, not captured Nimiq Pay scree
 
 ## Save the video
 
-Open `film.html` through a local web server in a Chromium based browser. Preview it, then use **Render video** and keep the tab open for 60 seconds. The browser downloads `lightningbridge-product-film.webm` when rendering completes. WebM can be uploaded to YouTube or converted to MP4 in CapCut.
+Run `node promo-video/server.mjs`, open `http://127.0.0.1:3210/` in Chrome or Edge, and select **Render video**. Keep the page open for about 60 seconds. It mixes `narration.wav` with the generated ambient score and saves `lightningbridge-product-film.webm` in this folder. `render-narration.ps1` regenerates the narration locally from `narration.txt` with Windows speech synthesis. Open `/preview` on the local server to inspect the saved video.
 
 ## Voiceover script
 
-The film uses on-screen copy and is silent so it can be understood without sound. `narration.txt` contains an optional voiceover script for a later narrated edit.
+`narration.txt` contains the spoken script, timed to the eight film scenes. Music uses a low, restrained synth bed with short transition chimes under the voice.
