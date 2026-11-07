@@ -1,0 +1,44 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnpm-store/
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files
+.env*
+
+# vercel
+.vercel
+
+# product film renders
+/promo-video/output/
+
+# unused starter assets
+/public/apple-icon.png
+/public/icon-dark-32x32.png
+/public/icon-light-32x32.png
+/public/icon.svg
+/public/placeholder-logo.png
+/public/placeholder-logo.svg
+/public/placeholder-user.jpg
+/public/placeholder.jpg
+/public/placeholder.svg
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+.vercel

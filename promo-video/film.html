@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LightningBridge — product film</title>
+  <style>
+    :root{color-scheme:dark;font-family:Segoe UI,Arial,sans-serif;background:#101b19;color:#f5f8f4}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:28px}
+    main{width:min(100%,1160px)}header{display:flex;align-items:center;justify-content:space-between;margin:0 0 14px;color:#dce6de;font-size:14px}
+    header strong{font-size:16px;letter-spacing:.02em}header span{color:#9caf9f;font-size:12px}
+    .stage{overflow:hidden;border:1px solid #32433a;border-radius:18px;background:#0f1c19;box-shadow:0 30px 90px #0007}
+    canvas{display:block;width:100%;height:auto;aspect-ratio:16/9}
+    .controls{display:flex;align-items:center;gap:14px;padding:16px 2px;color:#aab8ad;font-size:12px}
+    button{border:0;border-radius:9px;background:#21a45b;color:white;padding:12px 18px;font:700 13px Segoe UI,Arial,sans-serif;cursor:pointer}
+    button:disabled{opacity:.6;cursor:wait}.status{min-height:18px}.credit{margin-left:auto;color:#7f9184;font-size:11px}
+  </style>
+</head>
+<body>
+<main>
+  <header><strong>LIGHTNINGBRIDGE / PRODUCT FILM</strong><span>60 seconds · 16:9 · 1600 × 900</span></header>
+  <section class="stage"><canvas id="film" width="1600" height="900" aria-label="LightningBridge product film preview"></canvas></section>
+  <div class="controls"><button id="render">Render video</button><span class="status" id="status">Preview plays silently. Press Render video to save a WebM.</span><span class="credit">An explainer of the real payment flow</span></div>
+</main>
+<script>
+(() => {
+  const canvas = document.querySelector('#film');
+  const ctx = canvas.getContext('2d');
+  const status = document.querySelector('#status');
+  const button = document.querySelector('#render');
+  const W = canvas.width, H = canvas.height, DURATION = 60;
+  const C = { ink:'#18231f', dark:'#0f1b18', deep:'#10231c', green:'#27ad62', mint:'#bde8c7', orange:'#ffad50', paper:'#f5f8f3', white:'#ffffff', muted:'#75847b', line:'#dce5dd', blue:'#8ac6ee' };
+  const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
+  const ease=v=>{v=clamp(v);return v*v*(3-2*v)};
+  const between=(t,a,b)=>ease((t-a)/(b-a));
+  const rr=(x,y,w,h,r,fill,stroke)=>{ctx.beginPath();ctx.roundRect(x,y,w,h,r);if(fill){ctx.fillStyle=fill;ctx.fill()}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1.5;ctx.stroke()}};
+  const txt=(s,x,y,size,color,weight=500,align='left',font='Segoe UI,Arial,sans-serif')=>{ctx.font=`${weight} ${size}px ${font}`;ctx.fillStyle=color;ctx.textAlign=align;ctx.textBaseline='alphabetic';ctx.fillText(s,x,y)};
+  const line=(x1,y1,x2,y2,color,width=2)=>{ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap='round';ctx.stroke()};
+  const circle=(x,y,r,color)=>{ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=color;ctx.fill()};
+  function base(dark=false){ctx.fillStyle=dark?C.dark:C.paper;ctx.fillRect(0,0,W,H);const g=ctx.createRadialGradient(1250,170,30,1250,170,850);g.addColorStop(0,dark?'#173b2a':'#e6f4e8');g.addColorStop(1,dark?C.dark:C.paper);ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
+  function mark(x,y,s){rr(x,y,s,s*.82,14,'#e4f4e7');ctx.beginPath();ctx.moveTo(x+s*.18,y+s*.57);ctx.quadraticCurveTo(x+s*.5,y+s*.13,x+s*.82,y+s*.57);ctx.strokeStyle=C.green;ctx.lineWidth=s*.075;ctx.lineCap='round';ctx.stroke();circle(x+s*.18,y+s*.57,s*.065,C.orange);circle(x+s*.82,y+s*.57,s*.065,C.orange);ctx.beginPath();ctx.moveTo(x+s*.5,y+s*.25);ctx.lineTo(x+s*.42,y+s*.47);ctx.lineTo(x+s*.54,y+s*.47);ctx.lineTo(x+s*.47,y+s*.67);ctx.strokeStyle=C.orange;ctx.lineWidth=s*.07;ctx.stroke()}
+  function brand(x,y,color=C.ink){mark(x,y,52);txt('LightningBridge',x+68,y+35,24,color,700)}
+  function eyebrow(s,x,y,dark=false){circle(x,y-5,5,C.green);txt(s.toUpperCase(),x+17,y,15,dark?'#9dbaa5':'#6c7d71',700,'left','Segoe UI,Arial,sans-serif')}
+  function bridge(x1,y,x2,color,phase=0){ctx.beginPath();ctx.moveTo(x1,y);ctx.bezierCurveTo(x1+(x2-x1)*.32,y-135+phase,x1+(x2-x1)*.68,y-135+phase,x2,y);ctx.strokeStyle=color;ctx.lineWidth=5;ctx.stroke();for(let i=1;i<7;i++){const x=x1+(x2-x1)*i/7;line(x,y-13,x,y-96+Math.sin(phase/24+i)*4,color,2)}}
+  function pill(s,x,y,bg,color,w){rr(x,y,w,42,21,bg);txt(s,x+w/2,y+27,15,color,700,'center')}
+  function phone(x,y,w,h,mode='input',p=0){ctx.save();ctx.shadowColor='#16251b30';ctx.shadowBlur=34;ctx.shadowOffsetY=18;rr(x,y,w,h,42,'#17211d','#35483b');ctx.restore();rr(x+12,y+12,w-24,h-24,32,'#fbfcfa');rr(x+w*.38,y+17,w*.24,8,5,'#25312a');
+    txt('9:41',x+27,y+48,12,C.ink,700);circle(x+w-47,y+42,4,C.green);circle(x+w-33,y+42,4,C.green);circle(x+w-19,y+42,4,C.green);
+    mark(x+26,y+70,36);txt('LightningBridge',x+74,y+96,18,C.ink,700);line(x+25,y+121,x+w-25,y+121,'#e6ebe6',1);
+    txt(mode==='batch'?'Batch payments':'Pay Bitcoin over Lightning',x+25,y+160,22,C.ink,700);
+    if(mode==='input'||mode==='address'){
+      txt('Recipient',x+25,y+202,13,C.muted,600);rr(x+24,y+215,w-48,57,11,'#f7f9f6','#dce5dd');txt('alex@lightning.example',x+38,y+250,14,C.ink,500);
+      txt('Amount',x+25,y+304,13,C.muted,600);rr(x+24,y+317,w-48,64,11,'#f7f9f6','#dce5dd');txt('25,000',x+38,y+357,24,C.ink,700);txt('sats',x+w-45,y+357,13,C.muted,600,'right');
+      rr(x+24,y+405,w-48,52,12,C.green);txt('Continue',x+w/2,y+438,16,C.white,700,'center');
+      txt('Pay from Nimiq Pay',x+w/2,y+487,12,C.muted,500,'center');
+    }else if(mode==='invoice'){
+      eyebrow('PAYMENT REVIEW',x+25,y+204);txt('25,000 sats',x+25,y+262,29,C.ink,700);txt('Fresh invoice for your chosen amount',x+25,y+289,12,C.muted,500);
+      rr(x+24,y+313,w-48,90,12,'#f5f8f4','#dce5dd');txt('Recipient',x+39,y+340,12,C.muted,500);txt('alex@lightning.example',x+39,y+367,13,C.ink,600);
+      rr(x+24,y+421,w-48,48,12,C.green);txt('Continue in Nimiq Pay',x+w/2,y+451,14,C.white,700,'center');
+    }else if(mode==='approve'){
+      txt('Nimiq Pay',x+25,y+201,13,C.green,700);txt('Review payment',x+25,y+244,25,C.ink,700);
+      rr(x+24,y+267,w-48,76,12,'#f6f8f5','#dce5dd');txt('Paying',x+39,y+294,12,C.muted,500);txt('25,000 sats to Lightning',x+39,y+322,14,C.ink,700);
+      txt('Choose how to pay',x+25,y+376,13,C.muted,600);pill('NIM',x+24,y+390,'#e8f5ea','#277449',78);pill('USDT',x+112,y+390,'#e8f2f7','#326c8b',90);
+      rr(x+24,y+452,w-48,51,12,C.green);txt('Approve payment',x+w/2,y+484,15,C.white,700,'center');
+    }else if(mode==='batch'){
+      txt('Your payment list',x+25,y+202,13,C.muted,600);for(let i=0;i<3;i++){let yy=y+218+i*62;rr(x+24,yy,w-48,52,10,'#f7f9f6','#e2e9e2');circle(x+43,yy+26,11,['#e4f4e7','#eaf2f8','#fff0dd'][i]);txt(String(i+1).padStart(2,'0'),x+43,yy+30,10,C.green,700,'center');txt(`${[25000,8400,12000][i].toLocaleString()} sats`,x+66,yy+23,14,C.ink,700);txt('Checked · ready',x+66,yy+41,11,C.muted,500)}
+      rr(x+24,y+420,w-48,49,11,C.green);txt('Pay one at a time',x+w/2,y+451,14,C.white,700,'center');txt('Nimiq Pay approves each payment',x+w/2,y+492,11,C.muted,500,'center');
+    }
+  }
+  function card(x,y,w,h,title,sub,color=C.green){rr(x,y,w,h,22,'#ffffff','#e2e9e2');circle(x+38,y+39,17,color);txt(title,x+69,y+40,16,C.ink,700);txt(sub,x+69,y+66,13,C.muted,500)}
+  function scene(t){
+    if(t<5){base(true);let a=between(t,0,.9);ctx.globalAlpha=a;brand(118,118,C.white);txt('Pay Bitcoin Lightning',118,365,68,C.white,700);txt('with the NIM or USDT you already hold.',118,445,38,'#b9d7c1',500);bridge(275,700,1320,'#51cd7b',Math.sin(t*2)*8);circle(275,700,29,C.orange);circle(1320,700,29,C.blue);pill('NIMIQ PAY',208,746,'#193c2a','#bce9c6',136);pill('BITCOIN LIGHTNING',1216,746,'#1c3040','#c5e6fa',210);ctx.globalAlpha=1;return}
+    if(t<12){base();let q=between(t,5,6);eyebrow('A PAYMENT BRIDGE FOR THE WAY PEOPLE ALREADY PAY',104,104);txt('Different networks.',104,215,55,C.ink,700);txt('One familiar checkout.',104,283,55,C.ink,700);card(110,395,505,112,'Nimiq Pay user','Has NIM or USDT to spend',C.green);card(985,395,505,112,'Lightning recipient','Already accepts Bitcoin',C.orange);bridge(616,566,984,'#79c58c',Math.sin(t*2)*5);txt('The recipient keeps their Lightning wallet.',800,700,23,C.muted,500,'center');ctx.globalAlpha=1-q;rr(0,0,W,H,0,'#ffffff');ctx.globalAlpha=1;return}
+    if(t<21){base();eyebrow('01 · ENTER THEIR PAYMENT DETAILS',104,104);txt('Pay an address or an invoice.',104,204,49,C.ink,700);txt('No Lightning wallet or new recipient account required.',104,252,22,C.muted,500);phone(1070,93,355,700,'input',t);card(112,365,690,104,'Lightning Address','Enter recipient + amount; reuse the address later',C.green);card(112,495,690,104,'Fixed amount invoice','Paste a BOLT11 invoice the recipient sent you',C.orange);txt('Two ways to pay the person, using the wallet you have.',112,683,20,C.ink,600);return}
+    if(t<29){base();eyebrow('02 · GET A PAYABLE INVOICE',104,104);txt('An address is ready',104,212,53,C.ink,700);txt('when you are.',104,273,53,C.ink,700);txt('At checkout, LightningBridge requests a fresh,',104,354,22,C.muted,500);txt('amount-specific invoice from their Lightning provider.',104,387,22,C.muted,500);phone(1070,93,355,700,'invoice',t);bridge(155,578,830,'#7cc88f',Math.sin(t*1.4)*6);circle(155,578,14,C.green);circle(830,578,14,C.orange);pill('LIGHTNING ADDRESS',101,624,'#e4f4e7','#276f43',222);pill('FRESH INVOICE',606,624,'#fff0dd','#93601f',196);return}
+    if(t<39){base();eyebrow('03 · YOU STAY IN CONTROL',104,104);txt('Review it in',104,218,56,C.ink,700);txt('Nimiq Pay.',104,282,56,C.ink,700);txt('Nimiq Pay shows the final asset and fees.',104,355,21,C.muted,500);txt('You choose NIM or USDT and approve there.',104,389,21,C.muted,500);phone(1070,93,355,700,'approve',t);card(112,500,690,105,'Your keys stay in the wallet','LightningBridge never receives your private keys.',C.green);txt('Approval dialog shown as a flow illustration; approval is native to Nimiq Pay.',112,671,15,C.muted,500);return}
+    if(t<48){base(true);eyebrow('04 · THE WALLET HANDLES THE CROSS-NETWORK PAYMENT',104,105,true);txt('You approve the swap.',104,211,52,C.white,700);txt('Nimiq Pay sends BTC',104,276,52,C.white,700);txt('over Lightning.',104,341,52,C.white,700);pill('NIM OR USDT',128,465,'#1e4730','#b9edc7',204);pill('BTC',1270,465,'#1d3748','#c5e5f8',110);bridge(330,626,1270,'#55c77b',Math.sin(t*2)*10);const p=((t-39)*112)%890;circle(330+p,626-Math.sin(p/890*Math.PI)*118,11,C.orange);txt('Recipient does not need to switch wallets or accept NIM.',800,753,21,'#b4c8ba',500,'center');return}
+    if(t<54){base();eyebrow('FOR PAYING MORE THAN ONE PERSON',104,104);txt('A list for the',104,211,53,C.ink,700);txt('busy payment day.',104,270,53,C.ink,700);txt('Paste up to 20 fixed amount invoices.',104,355,22,C.muted,500);txt('Check the list together. Send one at a time.',104,391,22,C.muted,500);txt('Nimiq Pay asks you to approve each payment.',104,427,22,C.muted,500);phone(1070,93,355,700,'batch',t);return}
+    base(true);brand(116,92,C.white);txt('One wallet.',116,285,63,C.white,700);txt('Two payment networks.',116,361,63,C.white,700);txt('Pay Bitcoin Lightning with NIM or USDT.',116,440,29,'#b7d4bf',500);rr(116,527,612,103,16,'#172920','#33503d');txt('Open Nimiq Pay',145,569,18,C.mint,700);txt('Mini Apps  →  LightningBridge',145,601,21,C.white,600);txt('Submitted is not settled. Check the recipient’s Lightning wallet.',116,701,17,'#a4b5a8',500);txt('Illustrative screens · Approval is native to Nimiq Pay',116,742,14,'#7e9485',500);txt('lightningbridge.vercel.app',1484,824,18,'#8fa497',500,'right');
+  }
+  function drawAt(t){scene(t);txt('LIGHTNINGBRIDGE',W-90,H-42,13,'#7c8f82',700,'right');txt(`${Math.floor(t/60)}:${String(Math.floor(t%60)).padStart(2,'0')}`,84,H-42,13,'#8d9b90',600)}
+  let started=performance.now();
+  function preview(now){if(!recording)drawAt(((now-started)/1000)%DURATION);requestAnimationFrame(preview)}
+  let recording=false;
+  requestAnimationFrame(preview);
+  button.addEventListener('click',()=>{
+    if(!canvas.captureStream||!window.MediaRecorder){status.textContent='This browser cannot render video. Open this page in Chrome or Edge.';return}
+    button.disabled=true;recording=true;status.textContent='Rendering 60 seconds in real time… keep this tab open.';
+    const stream=canvas.captureStream(30);
+    const mime=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'].find(type=>MediaRecorder.isTypeSupported(type));
+    if(!mime){recording=false;button.disabled=false;status.textContent='This browser does not support WebM video recording.';return}
+    const chunks=[];let recorder;
+    try{recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:8_000_000})}catch(e){recording=false;button.disabled=false;status.textContent='Video recorder could not start in this browser.';return}
+    const begin=performance.now();
+    recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
+    recorder.onstop=async()=>{stream.getTracks().forEach(track=>track.stop());recording=false;button.disabled=true;button.textContent='Video rendered';const blob=new Blob(chunks,{type:mime});status.textContent=`Saving ${(blob.size/1_000_000).toFixed(1)} MB video into the project…`;try{const saved=await fetch('/save',{method:'POST',headers:{'content-type':'video/webm'},body:blob});if(!saved.ok)throw new Error('Could not save the rendered video.');status.textContent=`Video ready · ${(blob.size/1_000_000).toFixed(1)} MB · saved in promo-video/`;}catch(error){const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='lightningbridge-product-film.webm';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),30_000);status.textContent=`Project save unavailable; browser download started · ${(blob.size/1_000_000).toFixed(1)} MB`;}};
+    recorder.start(1000);
+    function frame(now){const t=(now-begin)/1000;drawAt(Math.min(t,DURATION));if(t>=DURATION){recorder.stop();return}requestAnimationFrame(frame)}
+    requestAnimationFrame(frame);
+  });
+})();
+</script>
+</body>
+</html>

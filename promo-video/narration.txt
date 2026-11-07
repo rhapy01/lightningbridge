@@ -1,0 +1,15 @@
+You hold NIM or USDT. The person you are paying accepts Bitcoin over Lightning.
+
+LightningBridge connects those two payment methods inside Nimiq Pay. The recipient keeps using their existing Lightning wallet.
+
+Enter a Lightning Address and amount, or paste a fixed-amount invoice. You do not need a Lightning wallet, and the recipient does not need a new account.
+
+For an address, LightningBridge requests a fresh invoice for your chosen amount at checkout. The address remains reusable; each payment gets a new invoice.
+
+Review the request in Nimiq Pay. Choose NIM or USDT, check the amount and fees, then approve in your wallet.
+
+After approval, Nimiq Pay handles the self-custodial swap from your chosen asset to Bitcoin over Lightning.
+
+Pay several people from one list with up to twenty invoices. Each payment still needs its own approval.
+
+Submitted does not mean settled. Check the recipient's Lightning wallet for confirmation. LightningBridge: open it inside Nimiq Pay.

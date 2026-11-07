@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="254" height="48" viewBox="0 0 254 48" fill="none">
+  <defs><linearGradient id="g" x1="4" y1="4" x2="42" y2="44" gradientUnits="userSpaceOnUse"><stop stop-color="#0D8062"/><stop offset="1" stop-color="#07543F"/></linearGradient></defs>
+  <rect x="2" y="2" width="44" height="44" rx="14" fill="url(#g)"/>
+  <path d="M11 29.5h5.5c3.5 0 4-11 8-11s4.5 11 8 11H38" stroke="#EAF8EC" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="11" cy="29.5" r="2.3" fill="#C9F177"/><circle cx="38" cy="29.5" r="2.3" fill="#F4B15C"/>
+  <path d="M26.4 11.5 20.8 23h4.1l-1 7.2 6.5-11.7h-4.2l.2-7Z" fill="#F8BD66"/>
+  <text x="57" y="31" fill="#15221F" font-family="Manrope,Arial,sans-serif" font-size="19" font-weight="800" letter-spacing="-.8">lightning</text>
+  <text x="151" y="31" fill="#0B7258" font-family="Manrope,Arial,sans-serif" font-size="19" font-weight="600" letter-spacing="-.8">bridge</text>
+</svg>
